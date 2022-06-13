@@ -1,7 +1,8 @@
-const userRouter = require("express").Router();
-const userController = require("../controllers/user");
+import express from "express";
+import userController from "../controllers/user.js";
+import { z } from "zod";
 
-const { z, ZodString } = require("zod");
+const userRouter = express.Router();
 
 userRouter.post("/signup", async (req, res, next) => {
   try {
@@ -25,4 +26,4 @@ userRouter.post("/signup", async (req, res, next) => {
   }
 });
 
-module.exports = userRouter;
+export default userRouter;

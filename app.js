@@ -1,13 +1,14 @@
 //#region LibrariesImport
-const app = require("express")();
-const bodyParser = require("body-parser");
+import express from "express";
+import bodyParser from "body-parser";
 //#endregion
 
 //#region RoutersImport
-const userRouter = require("./routes/user");
+import userRouter from "./routes/user.js";
 //#endregion
 
 //#region Pre-processing Middlewares
+const app = express();
 app.use(bodyParser.urlencoded({ extended: true }));
 //#endregion
 
@@ -19,4 +20,4 @@ app.use((req, res, next) => {
 app.use("/user", userRouter);
 //#endregion
 
-module.exports = app;
+export default app;

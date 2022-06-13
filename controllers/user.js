@@ -1,16 +1,23 @@
-const db = require("../db/database");
+import db from "../db/database.js";
 
-module.exports = {
+const userController = {
   signUp: async (req, res) => {
     try {
       const { username, email, password } = req.body;
 
-      //#region Create users table if it doesn't exist
-
-      //#region
-
       //#region Check for existing email
-      const result = db.run(`SELECT email FROM users WHERE email = "${email}"`);
+      const result = db.get(
+        `SELECT email FROM users WHERE email = "${email}"`,
+        [],
+        (err, rows) => {
+          if (err) {
+            console.log("Error in db.GET", err);
+          }
+          if (rows) {
+            console.log("ROWS", rows);
+          }
+        }
+      );
       console.log("RESULT", result);
       //#endregion
     } catch (err) {
@@ -18,3 +25,5 @@ module.exports = {
     }
   },
 };
+
+export default userController;
