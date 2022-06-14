@@ -12,7 +12,7 @@ userRouter.post("/signup", async (req, res, next) => {
       password: z.string().min(8),
     });
 
-    const { success, issues } = signUpRequest.safeParse(req.body);
+    const { success, issues, error } = signUpRequest.safeParse(req.body);
 
     if (!success) {
       return res

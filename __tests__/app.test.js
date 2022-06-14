@@ -1,17 +1,30 @@
 import request from "supertest";
 import app from "../app.js";
+import db from "../db/database.js";
+
+afterEach(async () => {
+  //Remove entries database
+  await db.run("DELETE FROM Users WHERE email='checkmail@mail.com'");
+});
 
 describe("SignUp", () => {
   it("POST /signup ---> Return ID of signed up user", () => {
     return request(app)
       .post("/user/signup")
       .send({
-        username: `aUsername`,
-        email: `somemail@mail.com`,
+        username: "aUsername",
+        email: "checkmail@mail.com",
         password: "aPassword",
       })
       .expect(201)
-      .expect({ id: expect.any(Number), message: "Signed up successfully" });
+      .then((res) => {
+        expect(res.body).toEqual(
+          expect.objectContaining({
+            id: expect.any(Number),
+            message: "Signed up successfully",
+          })
+        );
+      });
   });
 
   it("POST /signup ---> Return error code for already exists for duplicate email", () => {

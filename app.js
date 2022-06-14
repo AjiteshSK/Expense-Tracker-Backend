@@ -9,6 +9,7 @@ import userRouter from "./routes/user.js";
 
 //#region Pre-processing Middlewares
 const app = express();
+app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 //#endregion
 

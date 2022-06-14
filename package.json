@@ -5,7 +5,7 @@
   "description": "Backend for an expense tracking web app",
   "main": "index.js",
   "scripts": {
-    "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest",
+    "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --watchAll",
     "start": "nodemon index.js"
   },
   "author": "Ajitesh Singh Kahlon",
@@ -21,6 +21,7 @@
     "sqlite": "^4.1.1",
     "sqlite3": "^5.0.8",
     "supertest": "^6.2.3",
+    "uuid-int": "^3.1.0",
     "zod": "^3.17.3"
   }
 }
