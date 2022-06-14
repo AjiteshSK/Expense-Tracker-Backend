@@ -1,7 +1,7 @@
 import db from "../db/database.js";
 import bcrypt from "bcrypt";
 import UUID from "uuid-int";
-import crypto from "crypto";
+import jsonwebtoken from "jsonwebtoken";
 
 const userController = {
   signUp: async (req, res) => {
@@ -37,6 +37,33 @@ const userController = {
     } catch (err) {
       console.error("Error in signUp controller", err);
     }
+  },
+  signIn: async (req, res) => {
+    const { email, password } = req.body;
+
+    const user = await db.get("SELECT * FROM Users WHERE email = ?", email);
+
+    if (!user) {
+      return res.status(400).json({ message: "Incorrect email or password" });
+    }
+
+    console.log("USER", user);
+
+    const passwordsMatch = await bcrypt.compare(password, user.password);
+
+    if (!passwordsMatch) {
+      return res.status(400).json({ message: "Incorrect email or password" });
+    }
+
+    const token = jsonwebtoken.sign(
+      { email: email, user_id: user.id },
+      "aSecretKey",
+      { expiresIn: "1h" }
+    );
+
+    return res
+      .status(200)
+      .json({ jwt_token: token, message: "Signed in successfully" });
   },
 };
 

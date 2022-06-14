@@ -15,14 +15,33 @@ userRouter.post("/signup", async (req, res, next) => {
     const { success, issues, error } = signUpRequest.safeParse(req.body);
 
     if (!success) {
-      return res
-        .status(403)
-        .json({ message: "Please use a valid email or username" });
+      return res.status(400).json({ message: "Invalid request" });
     }
 
     await userController.signUp(req, res);
-  } catch (err) {
-    console.log("Error in signUp route", err);
+  } catch (error) {
+    console.log("Error in /user/signup route", error);
+  }
+});
+
+userRouter.post("/signin", async (req, res, next) => {
+  try {
+    const signInRequest = z.object({
+      email: z.string().email(),
+      password: z.string().min(8),
+    });
+
+    const { success, issues, error } = signInRequest.safeParse(req.body);
+
+    if (!success) {
+      return res.status(400).json({ message: "Invalid request" });
+    }
+
+    await userController.signIn(req, res);
+  } catch (error) {
+    if (error) {
+      console.log("Error in user/signin in route", error);
+    }
   }
 });
 

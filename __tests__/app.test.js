@@ -43,17 +43,52 @@ describe("SignUp", () => {
     return request(app)
       .post("/user/signup")
       .send({ username: " ", email: "invalidemail", password: " " })
-      .expect(403)
-      .expect({ message: "Please use a valid email or username" });
+      .expect(400)
+      .expect({ message: "Invalid request" });
   });
 });
 
 describe("SignIn", () => {
-  it("POST user/signin ---> Return success code and user JWT on signing in", () => {});
+  it("POST user/signin ---> Return success code and user JWT on signing in", () => {
+    return request(app)
+      .post("/user/signin")
+      .send({ email: "somemail@mail.com", password: "aPassword" })
+      .expect(200)
+      .then((res) => {
+        expect(res.body).toEqual(
+          expect.objectContaining({
+            jwt_token: expect.any(String),
+            message: "Signed in successfully",
+          })
+        );
+      });
+  });
 
-  it("POST user/signin ---> Return error code for invalid format", () => {});
+  it("POST user/signin ---> Return error code for invalid format", () => {
+    return request(app)
+      .post("/user/signin")
+      .send({ email: "invalidEmail", password: "ppaa" })
+      .expect(400)
+      .then((res) => {
+        expect(res.body).toEqual(
+          expect.objectContaining({
+            message: "Invalid request",
+          })
+        );
+      });
+  });
 
-  it("POST user/signin ---> Return error code for incorrect email or password", () => {});
+  it("POST user/signin ---> Return error code for incorrect email or password", () => {
+    return request(app)
+      .post("/user/signin")
+      .send({ email: "somemail@mail.com", password: "wrongpassword" })
+      .expect(400)
+      .then((res) => {
+        expect(res.body).toEqual(
+          expect.objectContaining({ message: "Incorrect email or password" })
+        );
+      });
+  });
 });
 
 describe("ResetPassword", () => {
