@@ -27,9 +27,9 @@ const userController = {
         "INSERT INTO Users (id, username, email, password) VALUES (?, ?, ?, ?)",
         [id, username, email, hashedPassword]
       );
-
+      const rawStatement = ress.stmt.getStatementInstance();
+      console.log("RESS", rawStatement);
       if (ress.changes == 1) {
-        console.log("RESS", ress);
         return res
           .status(201)
           .json({ id: id, message: "Signed up successfully" });
@@ -55,15 +55,23 @@ const userController = {
       return res.status(400).json({ message: "Incorrect email or password" });
     }
 
-    const token = jsonwebtoken.sign(
+    const accessToken = jsonwebtoken.sign(
       { email: email, user_id: user.id },
-      "aSecretKey",
-      { expiresIn: "1h" }
+      process.env.ACCESS_TOKEN_SECRET.toString(),
+      { expiresIn: "15m" }
     );
 
-    return res
-      .status(200)
-      .json({ jwt_token: token, message: "Signed in successfully" });
+    const refreshToken = jsonwebtoken.sign(
+      { email: email, user_id: user.id },
+      process.env.REFRESH_TOKEN_SECRET,
+      { expiresIn: "2h" }
+    );
+
+    return res.status(200).json({
+      access_token: accessToken,
+      refresh_token: refreshToken,
+      message: "Signed in successfully",
+    });
   },
 };
 

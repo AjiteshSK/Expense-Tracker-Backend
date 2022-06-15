@@ -1,6 +1,7 @@
 import request from "supertest";
 import app from "../app.js";
 import db from "../db/database.js";
+import "dotenv/config";
 
 afterEach(async () => {
   //Remove entries database
@@ -49,7 +50,7 @@ describe("SignUp", () => {
 });
 
 describe("SignIn", () => {
-  it("POST user/signin ---> Return success code and user JWT on signing in", () => {
+  it("POST user/signin ---> Return success code, access and refresh tokens on signing in", () => {
     return request(app)
       .post("/user/signin")
       .send({ email: "somemail@mail.com", password: "aPassword" })
@@ -57,7 +58,8 @@ describe("SignIn", () => {
       .then((res) => {
         expect(res.body).toEqual(
           expect.objectContaining({
-            jwt_token: expect.any(String),
+            access_token: expect.any(String),
+            refresh_token: expect.any(String),
             message: "Signed in successfully",
           })
         );
