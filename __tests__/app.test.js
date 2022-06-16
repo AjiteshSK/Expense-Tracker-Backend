@@ -50,20 +50,28 @@ describe("SignUp", () => {
 });
 
 describe("SignIn", () => {
-  it("POST user/signin ---> Return success code, access and refresh tokens on signing in", () => {
-    return request(app)
-      .post("/user/signin")
-      .send({ email: "somemail@mail.com", password: "aPassword" })
-      .expect(200)
-      .then((res) => {
-        expect(res.body).toEqual(
-          expect.objectContaining({
-            access_token: expect.any(String),
-            refresh_token: expect.any(String),
-            message: "Signed in successfully",
-          })
-        );
-      });
+  it("POST user/signin ---> Return success code, access and refresh tokens on signing in", async () => {
+    try {
+      return request(app)
+        .post("/user/signin")
+        .send({ email: "somemail@mail.com", password: "aPassword" })
+        .expect(200)
+        .then((res) => {
+          const cookies = res.headers["set-cookie"];
+          expect(cookies).toEqual(
+            expect.arrayContaining([expect.stringMatching(/^refresh-token=/)])
+          );
+
+          expect(res.body).toEqual(
+            expect.objectContaining({
+              access_token: expect.any(String),
+              message: "Signed in successfully",
+            })
+          );
+        });
+    } finally {
+      await db.run("DELETE FROM Refresh_Tokens WHERE user=676");
+    }
   });
 
   it("POST user/signin ---> Return error code for invalid format", () => {
@@ -88,6 +96,26 @@ describe("SignIn", () => {
       .then((res) => {
         expect(res.body).toEqual(
           expect.objectContaining({ message: "Incorrect email or password" })
+        );
+      });
+  });
+});
+
+describe("GenerateToken", () => {
+  it("GET user/generate-token ---> Return success code and new access & refresh token (rotation)", () => {
+    return request(app)
+      .get("/user/generate-token")
+      .expect(200)
+      .then((res) => {
+        expect(cookies).toEqual(
+          expect.arrayContaining([expect.stringMatching(/^refresh-token=/)])
+        );
+
+        expect(res.body).toEqual(
+          expect.objectContaining({
+            access_token: expect.any(String),
+            message: "Signed in successfully",
+          })
         );
       });
   });

@@ -45,4 +45,9 @@ userRouter.post("/signin", async (req, res, next) => {
   }
 });
 
+userRouter.get("/generate-token", async (req, res, next) => {
+  //check for cookie
+  await userController.generateNewToken(req, res);
+});
+
 export default userRouter;
