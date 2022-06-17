@@ -1,6 +1,7 @@
 import db from "../db/database.js";
 import bcrypt from "bcrypt";
 import UUID from "uuid-int";
+import { v4 as uuidv4 } from "uuid";
 import jsonwebtoken from "jsonwebtoken";
 
 const userController = {
@@ -47,11 +48,11 @@ const userController = {
 
       const user = await db.get("SELECT * FROM Users WHERE email = ?", email);
 
+      console.log("USER", user);
+
       if (!user) {
         return res.status(400).json({ message: "Incorrect email or password" });
       }
-
-      console.log("USER", user);
 
       const passwordsMatch = await bcrypt.compare(password, user.password);
 
@@ -60,27 +61,36 @@ const userController = {
       }
 
       const accessToken = jsonwebtoken.sign(
-        { email: email, user_id: user.id },
+        {
+          email: email,
+          user_id: user.id,
+          iat: Math.floor(Date.now() / 1000) - 30,
+        },
         process.env.ACCESS_TOKEN_SECRET.toString(),
         { expiresIn: "15m" }
       );
 
       const refreshToken = jsonwebtoken.sign(
-        { email: email, user_id: user.id },
+        {
+          email: email,
+          user_id: user.id,
+          iat: Math.floor(Date.now() / 1000) - 30,
+        },
         process.env.REFRESH_TOKEN_SECRET,
         { expiresIn: "2h" }
       );
 
-      const generator = UUID(230, 10);
-      const tokenId = generator.uuid();
-
+      const tokenId = uuidv4();
+      console.log("tokenID", tokenId);
       let date = new Date();
       date = date.toISOString();
 
       const createToken = await db.run(
-        "INSERT INTO Refresh_Tokens (id, token, Created_at, user) VALUES (?, ?, ?, ?)",
+        "INSERT or IGNORE INTO Refresh_Tokens (id, token, Created_at, user) VALUES (?, ?, ?, ?)",
         [tokenId, refreshToken, date, user.id]
       );
+
+      console.log("CreateToken", createToken);
 
       if (createToken.changes == 1) {
         res.cookie("refresh-token", refreshToken.toString(), {
@@ -92,6 +102,8 @@ const userController = {
           access_token: accessToken,
           message: "Signed in successfully",
         });
+      } else {
+        return res.status(500).json({ message: "Database error" });
       }
     } catch (error) {
       if (error) {
@@ -123,23 +135,29 @@ const userController = {
       }
 
       const newAccessToken = jsonwebtoken.sign(
-        { email: isVerified.email, user_id: isVerified.user_id },
+        {
+          email: isVerified.email,
+          user_id: isVerified.user_id,
+        },
         process.env.ACCESS_TOKEN_SECRET.toString(),
         { expiresIn: "15m" }
       );
 
       const newRefreshToken = jsonwebtoken.sign(
-        { email: isVerified.email, user_id: isVerified.user_id },
+        {
+          email: isVerified.email,
+          user_id: isVerified.user_id,
+        },
         process.env.REFRESH_TOKEN_SECRET,
         { expiresIn: "2h" }
       );
+
       console.log("TOKEN TO BE ADDED", newRefreshToken);
       await db.run("DELETE FROM Refresh_Tokens WHERE token = ?", [
         refreshToken,
       ]);
 
-      const generator = UUID(230, 10);
-      const tokenId = generator.uuid();
+      const tokenId = uuidv4();
 
       let date = new Date();
       date = date.toISOString();
