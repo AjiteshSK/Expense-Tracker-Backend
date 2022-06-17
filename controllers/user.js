@@ -125,6 +125,8 @@ const userController = {
         res.status(403).json({ message: "Invalid token" });
       }
 
+      //Check for expired token. Create new table for expired tokens
+
       const isVerified = jsonwebtoken.verify(
         refreshToken,
         process.env.REFRESH_TOKEN_SECRET
