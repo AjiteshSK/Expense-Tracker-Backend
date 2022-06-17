@@ -127,6 +127,19 @@ const userController = {
 
       //Check for expired token. Create new table for expired tokens
 
+      const usedRefreshedToken = await db.get(
+        "SELECT FROM used_refresh_tokens WHERE refresh_token=?",
+        [refreshTokenInStorage.id]
+      );
+
+      console.log("usedRefreshToken", usedRefreshedToken);
+      
+      if (usedRefreshedToken) {
+        //Invalidate current refresh token (by deleting it?)
+
+        return res.status(403).json({ message: "Nice try Mr. Hacker" });
+      }
+
       const isVerified = jsonwebtoken.verify(
         refreshToken,
         process.env.REFRESH_TOKEN_SECRET
@@ -155,13 +168,29 @@ const userController = {
       );
 
       console.log("TOKEN TO BE ADDED", newRefreshToken);
-      await db.run("DELETE FROM Refresh_Tokens WHERE token = ?", [
+      //Add to used_refresh_tokens and delete from refresh_tokens
+      const usedTokenId = uuidv4();
+
+      let date = new Date();
+      date = date.toISOString();
+
+      await db.run(
+        "INSERT INTO used_refresh_tokens (id, token, created_at, refresh_token VALUES(?,?,?,?))",
+        [
+          usedTokenId,
+          refreshTokenInStorage.token,
+          date,
+          refreshTokenInStorage.id,
+        ]
+      );
+
+      await db.run("DELETE FROM refresh_tokens WHERE token = ?", [
         refreshToken,
       ]);
 
       const tokenId = uuidv4();
 
-      let date = new Date();
+      date = new Date();
       date = date.toISOString();
 
       const createToken = await db.run(
