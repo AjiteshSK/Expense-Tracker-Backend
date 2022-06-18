@@ -116,7 +116,7 @@ describe("GenerateToken", () => {
 
         console.log("tokenValueSignIn", tokenValue);
 
-        request(app)
+        return request(app)
           .get("/user/generate-token")
           .set("Cookie", [`refresh-token=${tokenValue}`])
           .expect(200)
@@ -126,6 +126,7 @@ describe("GenerateToken", () => {
             expect(generateNewTokenCookies).toEqual(
               expect.arrayContaining([expect.stringMatching(/^refresh-token=/)])
             );
+
             expect(res.body).toEqual(
               expect.objectContaining({
                 access_token: expect.any(String),

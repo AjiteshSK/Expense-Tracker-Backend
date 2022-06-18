@@ -3,6 +3,7 @@ import bcrypt from "bcrypt";
 import UUID from "uuid-int";
 import { v4 as uuidv4 } from "uuid";
 import jsonwebtoken from "jsonwebtoken";
+import token from "../helpers/token.js";
 
 const userController = {
   signUp: async (req, res) => {
@@ -60,33 +61,17 @@ const userController = {
         return res.status(400).json({ message: "Incorrect email or password" });
       }
 
-      const accessToken = jsonwebtoken.sign(
-        {
-          email: email,
-          user_id: user.id,
-          iat: Math.floor(Date.now() / 1000) - 30,
-        },
-        process.env.ACCESS_TOKEN_SECRET.toString(),
-        { expiresIn: "15m" }
-      );
-
-      const refreshToken = jsonwebtoken.sign(
-        {
-          email: email,
-          user_id: user.id,
-          iat: Math.floor(Date.now() / 1000) - 30,
-        },
-        process.env.REFRESH_TOKEN_SECRET,
-        { expiresIn: "2h" }
+      const { accessToken, refreshToken } = token.generateTokenPair(
+        email,
+        user.id
       );
 
       const tokenId = uuidv4();
-      console.log("tokenID", tokenId);
       let date = new Date();
       date = date.toISOString();
 
       const createToken = await db.run(
-        "INSERT or IGNORE INTO Refresh_Tokens (id, token, Created_at, user) VALUES (?, ?, ?, ?)",
+        "INSERT or IGNORE INTO refresh_tokens (id, token, created_at, user) VALUES (?, ?, ?, ?)",
         [tokenId, refreshToken, date, user.id]
       );
 
@@ -114,30 +99,32 @@ const userController = {
   generateNewToken: async (req, res) => {
     try {
       const refreshToken = req.cookies["refresh-token"];
+
       console.log("TOKEN TO BE DELETED", refreshToken);
+
       const refreshTokenInStorage = await db.get(
-        "SELECT * FROM Refresh_Tokens WHERE token=?",
+        "SELECT * FROM refresh_tokens WHERE token=?",
         [refreshToken]
       );
 
+      console.log("refreshTokenInStorage", refreshTokenInStorage);
+
       if (!refreshTokenInStorage) {
         //signout
-        res.status(403).json({ message: "Invalid token" });
-      }
+        const usedRefreshedToken = await db.get(
+          "SELECT * FROM used_refresh_tokens WHERE token=?",
+          [refreshToken]
+        );
 
-      //Check for expired token. Create new table for expired tokens
+        console.log("usedRefreshToken", usedRefreshedToken);
 
-      const usedRefreshedToken = await db.get(
-        "SELECT FROM used_refresh_tokens WHERE refresh_token=?",
-        [refreshTokenInStorage.id]
-      );
+        if (usedRefreshedToken) {
+          //Invalidate current refresh token (by deleting it?)
 
-      console.log("usedRefreshToken", usedRefreshedToken);
-      
-      if (usedRefreshedToken) {
-        //Invalidate current refresh token (by deleting it?)
+          return res.status(403).json({ message: "Nice try Mr. Hacker" });
+        }
 
-        return res.status(403).json({ message: "Nice try Mr. Hacker" });
+        return res.status(403).json({ message: "Invalid token" });
       }
 
       const isVerified = jsonwebtoken.verify(
@@ -149,57 +136,20 @@ const userController = {
         res.status(403).json({ message: "Invalid token" });
       }
 
-      const newAccessToken = jsonwebtoken.sign(
-        {
-          email: isVerified.email,
-          user_id: isVerified.user_id,
-        },
-        process.env.ACCESS_TOKEN_SECRET.toString(),
-        { expiresIn: "15m" }
-      );
-
-      const newRefreshToken = jsonwebtoken.sign(
-        {
-          email: isVerified.email,
-          user_id: isVerified.user_id,
-        },
-        process.env.REFRESH_TOKEN_SECRET,
-        { expiresIn: "2h" }
-      );
+      const { accessToken: newAccessToken, refreshToken: newRefreshToken } =
+        token.generateTokenPair(isVerified.email, isVerified.user_id);
 
       console.log("TOKEN TO BE ADDED", newRefreshToken);
+
       //Add to used_refresh_tokens and delete from refresh_tokens
-      const usedTokenId = uuidv4();
 
-      let date = new Date();
-      date = date.toISOString();
-
-      await db.run(
-        "INSERT INTO used_refresh_tokens (id, token, created_at, refresh_token VALUES(?,?,?,?))",
-        [
-          usedTokenId,
-          refreshTokenInStorage.token,
-          date,
-          refreshTokenInStorage.id,
-        ]
+      const tokenRotatedSuccessfully = await token.rotateToken(
+        refreshTokenInStorage,
+        newRefreshToken,
+        isVerified
       );
 
-      await db.run("DELETE FROM refresh_tokens WHERE token = ?", [
-        refreshToken,
-      ]);
-
-      const tokenId = uuidv4();
-
-      date = new Date();
-      date = date.toISOString();
-
-      const createToken = await db.run(
-        //The whole thing should be a utility function
-        "INSERT INTO Refresh_Tokens (id, token, Created_at, user) VALUES (?, ?, ?, ?)",
-        [tokenId, newRefreshToken, date, isVerified.user_id]
-      );
-
-      if (createToken.changes == 1) {
+      if (tokenRotatedSuccessfully) {
         res.cookie("refresh-token", newRefreshToken.toString(), {
           httpOnly: true,
           //expires
