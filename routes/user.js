@@ -1,5 +1,6 @@
 import express from "express";
 import userController from "../controllers/user.js";
+import isAuth from "../helpers/isAuth.js";
 import { z } from "zod";
 
 const userRouter = express.Router();
@@ -48,6 +49,12 @@ userRouter.post("/signin", async (req, res, next) => {
 userRouter.get("/generate-token", async (req, res, next) => {
   //check for cookie
   await userController.generateNewToken(req, res);
+});
+
+userRouter.get("/protected-route", isAuth, async (req, res, next) => {
+  console.log("PROTECTED_ROUTE HIT", req.user);
+
+  return res.status(200).json({ message: "Access Granted" });
 });
 
 export default userRouter;

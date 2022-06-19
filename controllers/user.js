@@ -120,7 +120,7 @@ const userController = {
 
         if (usedRefreshedToken) {
           //Invalidate current refresh token (by deleting it?)
-
+          
           return res.status(403).json({ message: "Nice try Mr. Hacker" });
         }
 
