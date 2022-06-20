@@ -51,6 +51,16 @@ userRouter.get("/generate-token", async (req, res, next) => {
   await userController.generateNewToken(req, res);
 });
 
+userRouter.post("/signout", isAuth, async (req, res, next) => {
+  try {
+    await userController.signOut(req, res);
+  } catch (error) {
+    if (error) {
+      console.log("Error in /user/signout route", error);
+    }
+  }
+});
+
 userRouter.get("/protected-route", isAuth, async (req, res, next) => {
   return res.status(200).json({ message: "Access Granted" });
 });

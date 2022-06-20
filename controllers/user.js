@@ -110,7 +110,7 @@ const userController = {
 
         if (usedRefreshedToken) {
           //Invalidate current refresh token (by deleting it?)
-          
+
           return res.status(403).json({ message: "Nice try Mr. Hacker" });
         }
 
@@ -152,6 +152,18 @@ const userController = {
       if (error) {
         console.log("Error in generateNewToken controller", error);
       }
+    }
+  },
+  signOut: async (req, res) => {
+    const { id } = req.user;
+
+    const deleteRefreshToken = await db.run(
+      "DELETE FROM refresh_tokens WHERE user = ?",
+      [id]
+    );
+
+    if (deleteRefreshToken.changes == 1) {
+      return res.status(200).json({ message: "Signed out successfully" });
     }
   },
 };

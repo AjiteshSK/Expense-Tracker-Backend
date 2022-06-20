@@ -12,7 +12,7 @@ const tokenHelper = {
         iat: Math.floor(Date.now() / 1000) - 30,
       },
       process.env.ACCESS_TOKEN_SECRET.toString(),
-      { expiresIn: "10m" }
+      { expiresIn: "5m" }
     );
 
     const refreshToken = jsonwebtoken.sign(
@@ -22,7 +22,7 @@ const tokenHelper = {
         randomize: Math.random(),
       },
       process.env.REFRESH_TOKEN_SECRET,
-      { expiresIn: "1h" }
+      { expiresIn: "20m" }
     );
 
     return { accessToken, refreshToken };

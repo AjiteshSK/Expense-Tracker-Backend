@@ -6,13 +6,12 @@ import "dotenv/config";
 
 expect.extend({ toBeOneOf });
 
-afterEach(async () => {
-  await db.run("DELETE FROM Users WHERE email='checkmail@mail.com'");
-  await db.run("DELETE FROM refresh_tokens WHERE user=676");
-});
-
 //#region Authorization Tests
 describe("SignUp", () => {
+  afterEach(async () => {
+    await db.run("DELETE FROM Users WHERE email='checkmail@mail.com'");
+  });
+
   it("POST /signup ---> Return ID of signed up user", () => {
     return request(app)
       .post("/user/signup")
@@ -54,6 +53,9 @@ describe("SignUp", () => {
 });
 
 describe("SignIn", () => {
+  afterEach(async () => {
+    await db.run("DELETE FROM refresh_tokens WHERE user=676");
+  });
   it("POST user/signin ---> Return success code, access and refresh tokens on signing in", async () => {
     return request(app)
       .post("/user/signin")
@@ -112,6 +114,10 @@ describe("GenerateToken", () => {
     const beginIndex = signInCookies.indexOf("=");
     const endIndex = signInCookies.indexOf(";");
     tokenValue = signInCookies.slice(beginIndex + 1, endIndex);
+  });
+
+  afterEach(async () => {
+    await db.run("DELETE FROM refresh_tokens WHERE user=676");
   });
 
   it("GET user/generate-token ---> Return success code and new access & refresh token (rotation)", () => {
@@ -175,6 +181,35 @@ describe("GenerateToken", () => {
             );
           });
       });
+  });
+});
+
+describe("SignOut", () => {
+  let tokenValue;
+  let accessToken;
+  
+  beforeAll(async () => {
+    const response = await request(app)
+      .post("/user/signin")
+      .send({ email: "somemail@mail.com", password: "aPassword" });
+
+    const signInCookies = response.headers["set-cookie"].toString();
+    const beginIndex = signInCookies.indexOf("=");
+    const endIndex = signInCookies.indexOf(";");
+    tokenValue = signInCookies.slice(beginIndex + 1, endIndex);
+
+    accessToken = response.body.access_token;
+  });
+
+  it("POST /user/signout ---> Return success code and successful log out message", async () => {
+    const response = await request(app)
+      .post("/user/signout")
+      .set("Authorization", `Bearer ${accessToken}`)
+      .expect(200);
+
+    expect(response.body).toEqual(
+      expect.objectContaining({ message: "Signed out successfully" })
+    );
   });
 });
 
