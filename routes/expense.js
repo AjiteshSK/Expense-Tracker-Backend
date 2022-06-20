@@ -28,6 +28,38 @@ expenseRouter.post("/create", isAuth, async (req, res, next) => {
   }
 });
 
-expenseRouter.get("/all", isAuth, async (req, res, next) => {});
+expenseRouter.get("/all", isAuth, async (req, res, next) => {
+  await expenseController.getAll(req, res);
+});
+
+expenseRouter.get("/get-by-id/:expenseId", isAuth, async (req, res, next) => {
+  const expenseGetByIdRequest = z.object({ expenseId: z.string().min(5) });
+
+  const { success, issues, error } = expenseGetByIdRequest.safeParse(
+    req.params
+  );
+
+  if (!success) {
+    return res.status(400).json({ message: "Invalid request" });
+  }
+
+  await expenseController.getById(req, res);
+});
+
+expenseRouter.put("/update/:expenseId", isAuth, async (req, res, next) => {
+  const expenseUpdateRequest = z.object({ expenseId: z.string().min(5) });
+
+  const { success, issues, error } = expenseUpdateRequest.safeParse(req.params);
+
+  if (!success) {
+    return res.status(400).json({ message: "Invalid request" });
+  }
+
+  await expenseController.update(req, res);
+});
+
+expenseRouter.delete("/delete/:expenseId", isAuth, async (req, res, next) => {
+  await expenseController.delete(req, res);
+});
 
 export default expenseRouter;

@@ -244,6 +244,7 @@ describe("Expense CRUD", () => {
   let tokenValue;
   let accessToken;
   let expenseID;
+
   beforeAll(async () => {
     const response = await request(app)
       .post("/user/signin")
@@ -293,13 +294,16 @@ describe("Expense CRUD", () => {
       .set("Authorization", `Bearer ${accessToken}`)
       .expect(200)
       .then((res) => {
+        console.log("RESS", res.body);
         expect(res.body).toEqual(expect.arrayContaining([]));
       });
   });
 
   it("GET /expense/:id ---> Return success code with specific expense", async () => {
+    console.log("EXPENSEID", expenseID);
     return request(app)
-      .get(`/expense/${expenseID}`)
+      .get(`/expense/get-by-id/${expenseID}`)
+      .set("Authorization", `Bearer ${accessToken}`)
       .expect(200)
       .then((res) => {
         expect(res.body).toEqual(
@@ -307,15 +311,18 @@ describe("Expense CRUD", () => {
             id: expect.any(String),
             name: expect.any(String),
             category: expect.any(String),
-            notes: expect.any(String),
+            notes: expect.toBeOneOf([null, expect.any(String)]),
+            price: expect.any(Number),
+            incurred_by: expect.any(Number),
           })
         );
       });
   });
 
   it("PUT /expense/update/:id ---> Return success code with updated expense", async () => {
-    const reponse = await request(app)
+    const response = await request(app)
       .put(`/expense/update/${expenseID}`)
+      .set("Authorization", `Bearer ${accessToken}`)
       .send({ price: 34.99 })
       .expect(200);
 
@@ -324,7 +331,9 @@ describe("Expense CRUD", () => {
         id: expect.any(String),
         name: expect.any(String),
         category: expect.any(String),
-        notes: expect.any(String),
+        notes: expect.toBeOneOf([null, expect.any(String)]),
+        price: expect.any(Number),
+        incurred_by: expect.any(Number),
       })
     );
   });
@@ -332,6 +341,7 @@ describe("Expense CRUD", () => {
   it("DELETE /expense/delete/:id ---> Return success code and message", async () => {
     const response = await request(app)
       .delete(`/expense/delete/${expenseID}`)
+      .set("Authorization", `Bearer ${accessToken}`)
       .expect(200);
 
     expect(response.body).toEqual(
