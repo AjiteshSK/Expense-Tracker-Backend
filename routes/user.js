@@ -52,8 +52,6 @@ userRouter.get("/generate-token", async (req, res, next) => {
 });
 
 userRouter.get("/protected-route", isAuth, async (req, res, next) => {
-  console.log("PROTECTED_ROUTE HIT", req.user);
-
   return res.status(200).json({ message: "Access Granted" });
 });
 

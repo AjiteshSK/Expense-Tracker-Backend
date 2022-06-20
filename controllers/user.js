@@ -49,8 +49,6 @@ const userController = {
 
       const user = await db.get("SELECT * FROM Users WHERE email = ?", email);
 
-      console.log("USER", user);
-
       if (!user) {
         return res.status(400).json({ message: "Incorrect email or password" });
       }
@@ -75,8 +73,6 @@ const userController = {
         [tokenId, refreshToken, date, user.id]
       );
 
-      console.log("CreateToken", createToken);
-
       if (createToken.changes == 1) {
         res.cookie("refresh-token", refreshToken.toString(), {
           httpOnly: true,
@@ -100,14 +96,10 @@ const userController = {
     try {
       const refreshToken = req.cookies["refresh-token"];
 
-      console.log("TOKEN TO BE DELETED", refreshToken);
-
       const refreshTokenInStorage = await db.get(
         "SELECT * FROM refresh_tokens WHERE token=?",
         [refreshToken]
       );
-
-      console.log("refreshTokenInStorage", refreshTokenInStorage);
 
       if (!refreshTokenInStorage) {
         //signout
@@ -115,8 +107,6 @@ const userController = {
           "SELECT * FROM used_refresh_tokens WHERE token=?",
           [refreshToken]
         );
-
-        console.log("usedRefreshToken", usedRefreshedToken);
 
         if (usedRefreshedToken) {
           //Invalidate current refresh token (by deleting it?)
@@ -138,8 +128,6 @@ const userController = {
 
       const { accessToken: newAccessToken, refreshToken: newRefreshToken } =
         token.generateTokenPair(isVerified.email, isVerified.user_id);
-
-      console.log("TOKEN TO BE ADDED", newRefreshToken);
 
       //Add to used_refresh_tokens and delete from refresh_tokens
 

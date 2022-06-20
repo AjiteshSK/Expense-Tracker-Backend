@@ -6,6 +6,7 @@ import cookieParser from "cookie-parser";
 
 //#region RoutersImport
 import userRouter from "./routes/user.js";
+import expenseRouter from "./routes/expense.js";
 //#endregion
 
 //#region Pre-processing Middlewares
@@ -16,12 +17,8 @@ app.use(cookieParser());
 //#endregion
 
 //#region Routes
-app.use((req, res, next) => {
-  console.log("REQ BODY", req.body);
-  console.log("REQ COOKIES", req.cookies);
-  next();
-});
 app.use("/user", userRouter);
+app.use("/expense", expenseRouter);
 //#endregion
 
 export default app;

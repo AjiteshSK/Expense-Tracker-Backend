@@ -15,7 +15,6 @@ const isAuth = async (req, res, next) => {
     const authorizationHeader = req.headers["authorization"];
     const accessToken =
       authorizationHeader && authorizationHeader.split(" ")[1];
-    console.log("accessToken in iaAuth", accessToken);
     if (!accessToken) {
       return res
         .status(400)
@@ -30,11 +29,11 @@ const isAuth = async (req, res, next) => {
           console.log("jwt verify error", err);
           return res.status(403).json({ message: "Couldn't verify token" });
         }
-        console.log("USER", user);
+
         const userData = await db.get("SELECT * FROM Users WHERE id=?", [
           user.user_id,
         ]);
-        console.log("USER_DATE", userData);
+
         req.user = userData;
         next();
       }

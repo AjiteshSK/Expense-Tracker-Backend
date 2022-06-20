@@ -29,7 +29,6 @@ const tokenHelper = {
   },
   rotateToken: async (refreshTokenInStorage, newRefreshToken, isVerified) => {
     try {
-      console.log("storageToken", refreshTokenInStorage);
       const usedTokenId = uuidv4();
 
       let date = new Date();
